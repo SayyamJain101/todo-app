@@ -1,72 +1,108 @@
-import React, { useEffect, useRef, useState } from 'react'
-import todo_icon from '../assets/todo_icon.png'
-import Todoitems from './Todoitems'
+import { useEffect, useState } from "react";
+import api from "../api";
+import TodoItem from "./Todoitems";
 
-const Todo = () => {
+function Todo() {
+  const [todos, setTodos] = useState([]);
+  const [newTitle, setNewTitle] = useState("");
+  const [loading, setLoading] = useState(false);
 
-const [todoList, setTodoList] = useState(localStorage.getItem("todos")?JSON.parse(localStorage.getItem("todos")): []);
+  // Fetch todos on mount
+  useEffect(() => {
+    const fetchTodos = async () => {
+      try {
+        setLoading(true);
+        const res = await api.get("/todos");
+        setTodos(res.data);
+      } catch (err) {
+        console.error("Failed to fetch todos", err);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-const inputRef = useRef();
+    fetchTodos();
+  }, []);
 
-const add = () =>{
-    const inputText = inputRef.current.value.trim();
-    
-    if(inputText===""){
-        return null;
+  const handleAddTodo = async (e) => {
+    e.preventDefault();
+    const title = newTitle.trim();
+    if (!title) return;
+
+    try {
+      const res = await api.post("/todos", { title });
+      setTodos((prev) => [res.data, ...prev]); // add new at top
+      setNewTitle("");
+    } catch (err) {
+      console.error("Failed to add todo", err);
     }
+  };
 
-    const newTodo = {
-        id: Date.now(),
-        text: inputText,
-        isComplete: false,
+  const handleToggleTodo = async (id, currentCompleted) => {
+    try {
+      const res = await api.put(`/todos/${id}`, {
+        completed: !currentCompleted,
+      });
+
+      setTodos((prev) =>
+        prev.map((t) => (t._id === id ? res.data : t))
+      );
+    } catch (err) {
+      console.error("Failed to toggle todo", err);
     }
-    setTodoList((prev)=>[...prev,newTodo]);
-    inputRef.current.value = "";
-}
+  };
 
-const deleteTodo = (id) =>{
-    setTodoList((prvTodos)=>{
-        return prvTodos.filter((todo) => todo.id !== id);
-    })
-}
-
-const toggle = (id)=>{
-    setTodoList((prevTodos)=>{
-        return prevTodos.map((todo)=>{
-            if(todo.id === id){
-                return {...todo, isComplete: !todo.isComplete}
-            }
-            return todo;
-        })
-    })
-}
-
-useEffect(()=>{
-    localStorage.setItem("todos", JSON.stringify(todoList))
-},[todoList])
+  const handleDeleteTodo = async (id) => {
+    try {
+      await api.delete(`/todos/${id}`);
+      setTodos((prev) => prev.filter((t) => t._id !== id));
+    } catch (err) {
+      console.error("Failed to delete todo", err);
+    }
+  };
 
   return (
-    <div className='bg-white place-self-center w-11/12 max-w-md flex flex-col p-7 min-h-[550px] rounded-xl'>
+    <div className="w-full max-w-md bg-slate-800 rounded-xl shadow-lg p-6">
+      <h1 className="text-2xl font-bold mb-4 text-center">
+        Todo App (MERN)
+      </h1>
 
-        <div className='flex items-center mt-7 gap-2'>
-            <img className='w-8' src={todo_icon} alt="" />
-            <h1 className='text-3xl font-semibold'>To-Do List</h1>
-        </div>
+      <form onSubmit={handleAddTodo} className="flex gap-2 mb-4">
+        <input
+          type="text"
+          value={newTitle}
+          onChange={(e) => setNewTitle(e.target.value)}
+          placeholder="Add a new task..."
+          className="flex-1 px-3 py-2 rounded-lg bg-slate-700 border border-slate-600 focus:outline-none"
+        />
+        <button
+          type="submit"
+          className="px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 font-semibold"
+        >
+          Add
+        </button>
+      </form>
 
-        <div className='flex items-center my-7 bg-gray-200 rounded-full'>
-            <input ref={inputRef} className='bg-transparent border-0 outline-none flex-1 h-14 pl-6 pr-2 placeholder: text-slate-600' type="text" placeholder='Add your task' />
-            <button onClick={add} className='border-none rounded-full bg-orange-600 w-32 h-14 text-white text-lg font-medium cursor-pointer'>ADD +</button>
-        </div>
-
-        <div>
-        {todoList.map((item,index)=>{
-            return <Todoitems key={index} text={item.text} id={item.id} isComplete={item.isComplete} deleteTodo={deleteTodo} toggle={toggle} />
-        })}
-            
-        </div>
-        
+      {loading ? (
+        <p className="text-center text-slate-400">Loading...</p>
+      ) : todos.length === 0 ? (
+        <p className="text-center text-slate-400">No tasks yet.</p>
+      ) : (
+        <ul className="space-y-2">
+          {todos.map((todo) => (
+            <TodoItem
+              key={todo._id}
+              todo={todo}
+              onToggle={() =>
+                handleToggleTodo(todo._id, todo.completed)
+              }
+              onDelete={() => handleDeleteTodo(todo._id)}
+            />
+          ))}
+        </ul>
+      )}
     </div>
-  )
+  );
 }
 
-export default Todo
+export default Todo;

@@ -1,8 +1,48 @@
-# React + Vite
+# MERN Todo App
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A full-stack Todo application built using MongoDB, Express.js, React, and Node.js.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- Add, edit, delete tasks
+- Mark tasks as completed
+- Persistent storage using MongoDB Atlas
+- Fully responsive UI with Tailwind CSS
+
+## Tech Stack
+
+Frontend: React, Axios, Tailwind CSS  
+Backend: Node.js, Express.js, MongoDB, Mongoose  
+Database: MongoDB Atlas
+
+## Installation
+
+### 1. Clone the repository
+
+git clone https://github.com/SayyamJain101/todo-app.git
+cd todo-app
+
+### 2. Install frontend dependencies
+
+npm install
+
+### 3. Setup backend
+
+cd server
+npm install
+
+Create `.env` file in /server:
+MONGO_URI=YOUR_CONNECTION_STRING
+PORT=5000
+
+### 4. Run project
+
+# Terminal 1:
+
+cd server
+npm start
+
+# Terminal 2:
+
+cd ..
+npm run dev
